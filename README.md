@@ -1,6 +1,6 @@
 # seeded
 
-A functional, responsive clone of the public useLaunch visual language, rebuilt as a seeded launchpad shell with working navigation, launch draft form, live board search, copy buttons, responsive layout, and local interaction states.
+A functional, responsive clone of the public seeded visual language, rebuilt as a seeded project seed-round launchpad shell with working navigation, launch draft form, live board search, copy buttons, responsive layout, and local interaction states.
 
 ## Run
 
