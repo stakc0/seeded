@@ -1,1 +1,1 @@
-{"name":"seeded","version":"1.0.0","private":true,"type":"module","scripts":{"build":"node scripts/build.mjs","dev":"node scripts/server.mjs","preview":"node scripts/server.mjs"}}
+{"name":"seeded","version":"1.0.0","private":true,"type":"module","scripts":{"build":"node scripts/build.mjs","dev":"node scripts/local-server.mjs","preview":"node scripts/local-server.mjs"}}
