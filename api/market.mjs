@@ -2,11 +2,12 @@ const MINT='619k8nfLocMxXCqDWei37QxTnZ114LfuHQSdU19pump';
 const TTL=15_000;
 const memory=globalThis.__seededMarketCache??=new Map();
 const send=(res,status,body)=>{res.statusCode=status;res.setHeader('content-type','application/json; charset=utf-8');res.setHeader('cache-control','no-store');res.end(JSON.stringify(body));};
-const timeout=ms=>AbortSignal.timeout(ms);
+const timeout=ms=>new Promise((_,reject)=>setTimeout(()=>reject(new Error('upstream timeout')),ms));
+const fetchBounded=(url,options,ms)=>Promise.race([fetch(url,options),timeout(ms)]);
 async function supabaseRequest(path,options={}){
   const url=process.env.SUPABASE_URL,key=process.env.SUPABASE_SERVICE_ROLE_KEY;
   if(!url||!key)return null;
-  const r=await fetch(`${url}/rest/v1/${path}`,{...options,signal:timeout(5000),headers:{apikey:key,Authorization:`Bearer ${key}`,Prefer:'return=representation',...(options.headers||{})}});
+  const r=await fetchBounded(`${url}/rest/v1/${path}`,{...options,headers:{apikey:key,Authorization:`Bearer ${key}`,Prefer:'return=representation',...(options.headers||{})}},5000);
   if(!r.ok)return null;return r.status===204?null:r.json();
 }
 function normalize(mint,pair,fetchedAt,source='dexscreener'){
@@ -25,7 +26,7 @@ export default async function handler(req,res){
   const now=Date.now();const cached=memory.get(mint);const db=await readDb(mint).catch(()=>null);const durable=db??cached;
   if(durable&&now-new Date(durable.fetchedAt).getTime()<TTL)return send(res,200,{...durable,cache:'fresh'});
   try{
-    const r=await fetch(`https://api.dexscreener.com/latest/dex/tokens/${encodeURIComponent(mint)}`,{headers:{accept:'application/json'},signal:timeout(8000)});
+    const r=await fetchBounded(`https://api.dexscreener.com/latest/dex/tokens/${encodeURIComponent(mint)}`,{headers:{accept:'application/json'}},8000);
     if(!r.ok)throw new Error(`Dexscreener ${r.status}`);
     const data=await r.json();const pairs=Array.isArray(data.pairs)?data.pairs:[];
     pairs.sort((a,b)=>(b.liquidity?.usd??0)-(a.liquidity?.usd??0));
